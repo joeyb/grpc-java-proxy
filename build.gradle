@@ -1,0 +1,107 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.13.0'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
+    }
+}
+
+plugins {
+    id 'nebula.project' version '3.3.0'
+    id 'nebula.provided-base' version '3.1.0'
+}
+
+apply plugin: 'com.github.ben-manes.versions'
+apply plugin: 'com.google.protobuf'
+
+apply plugin: 'java'
+apply plugin: 'checkstyle'
+apply plugin: 'idea'
+apply plugin: 'jacoco'
+apply plugin: 'nebula.contacts'
+apply plugin: 'nebula.info'
+apply plugin: 'nebula.javadoc-jar'
+apply plugin: 'nebula.provided-base'
+apply plugin: 'nebula.source-jar'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    provided "com.google.code.findbugs:jsr305:$jsr305Version"
+
+    compile "io.grpc:grpc-all:$grpcVersion"
+
+    testCompile "junit:junit:$junitVersion"
+    testCompile "org.assertj:assertj-core:$assertjVersion"
+    testCompile "org.mockito:mockito-core:$mockitoVersion"
+}
+
+group 'org.joeyb.grpc.proxy'
+
+sourceCompatibility = 1.8
+
+checkstyle {
+    configFile = file("$rootDir/gradle/checkstyle/checkstyle.xml")
+    toolVersion = '6.18'
+}
+
+jacoco {
+    toolVersion = '0.7.6.201602180812'
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+check.dependsOn jacocoTestReport
+
+project.tasks.withType(Javadoc) {
+    failOnError = false
+}
+project.tasks.withType(Test) { Test testTask ->
+    testTask.testLogging.exceptionFormat = 'full'
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+    // Configure the output dir to be named so it's sorted after "src" to play nicely with IntelliJ 2016+.
+    generatedFilesBaseDir = file("$projectDir/src_generated_protos")
+}
+
+idea {
+    module {
+        def generatedProtosMainGrpcDir = file("${protobuf.generatedFilesBaseDir}/main/grpc")
+        def generatedProtosMainJavaDir = file("${protobuf.generatedFilesBaseDir}/main/java")
+        def generatedProtosTestGrpcDir = file("${protobuf.generatedFilesBaseDir}/test/grpc")
+        def generatedProtosTestJavaDir = file("${protobuf.generatedFilesBaseDir}/test/java")
+
+        sourceDirs += generatedProtosMainGrpcDir
+        sourceDirs += generatedProtosMainJavaDir
+        testSourceDirs += generatedProtosTestGrpcDir
+        testSourceDirs += generatedProtosTestJavaDir
+
+        generatedSourceDirs += generatedProtosMainGrpcDir
+        generatedSourceDirs += generatedProtosMainJavaDir
+        generatedSourceDirs += generatedProtosTestGrpcDir
+        generatedSourceDirs += generatedProtosTestJavaDir
+    }
+}
