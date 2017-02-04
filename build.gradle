@@ -33,8 +33,11 @@ repositories {
 dependencies {
     provided "com.google.code.findbugs:jsr305:$jsr305Version"
 
-    compile "io.grpc:grpc-all:$grpcVersion"
+    compile "io.grpc:grpc-netty:$grpcVersion"
+    compile "io.grpc:grpc-protobuf:$grpcVersion"
+    compile "io.grpc:grpc-stub:$grpcVersion"
 
+    testCompile "io.grpc:grpc-testing:$grpcVersion"
     testCompile "junit:junit:$junitVersion"
     testCompile "org.assertj:assertj-core:$assertjVersion"
     testCompile "org.mockito:mockito-core:$mockitoVersion"
